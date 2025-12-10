@@ -19,36 +19,25 @@ export async function reduceStream<T>(
   cb: (acc: T, curr: string) => T,
   init: T
 ): Promise<T> {
-  let remainder = "";
   let acc = init;
-  const queue: string[] = [];
+  let tokens: string[] = [];
   for await (const chunk of stream.iterator()) {
-    const items = chunk.toString().split(delimiter);
-    if (items.length === 0) continue;
-    // there was a remainder last time, last split was not at a delimiter
-    // boundary
-    if (remainder !== "") {
-      remainder = remainder + items.shift();
-    }
-    // there are more IDs in the chunk, this means the current remainder is a
-    // complete id
-    if (items.length > 0) {
-      queue.push(remainder);
-      // store the final item as the new remainder
-      remainder = items.pop();
-    }
-    // at this point any the remaining IDs should be valid, so add them to the
-    // queue
-    queue.push(...items);
-
-    while (queue.length > 0) {
-      const next = queue.shift() ?? "";
-      if (next === "") continue;
-      acc = cb(acc, next);
+    let chars = (chunk as Buffer).toString().split("");
+    while (chars.length > 0) {
+      const char = chars.shift()!;
+      if (char === delimiter) {
+        acc = cb(acc, tokens.join(""));
+        tokens = [];
+        if (chars.length === 0) {
+          tokens.push("");
+        }
+      } else {
+        tokens.push(char);
+      }
     }
   }
-  if (remainder) {
-    acc = cb(acc, remainder);
+  if (tokens.length) {
+    acc = cb(acc, tokens.join(""));
   }
   return acc;
 }

@@ -2,20 +2,42 @@ import { describe, expect, test } from "vitest";
 import { readableString, reduceStream } from "./fs";
 
 describe("fs", () => {
-  const ids = "123,456,789,101112";
   test("reduceStream", async () => {
-    const res = [123, 456, 789, 101112];
+    const ids = "123,456,789,101112,";
+    const expected1 = [123, 456, 789, 101112, null];
 
-    const stream = await readableString(ids, { highWaterMark: 8 });
-    const parsed = await reduceStream(
-      stream,
+    const stream1 = await readableString(ids, { highWaterMark: 8 });
+    const parsed1 = await reduceStream(
+      stream1,
       ",",
       (acc, n) => {
-        acc.push(parseInt(n, 10));
+        if (n === "") {
+          acc.push(null);
+        } else {
+          acc.push(parseInt(n, 10));
+        }
         return acc;
       },
-      [] as number[]
+      [] as (number | null)[]
     );
-    expect(parsed).toStrictEqual(res);
+    expect(parsed1).toStrictEqual(expected1);
+
+    const lines = ["123", "456", "", "789", "", "101112"].join("\n");
+    const expected2 = [123, 456, null, 789, null, 101112];
+    const stream2 = await readableString(lines, { highWaterMark: 8 });
+    const parsed2 = await reduceStream(
+      stream2,
+      "\n",
+      (acc, n) => {
+        if (n === "") {
+          acc.push(null);
+        } else {
+          acc.push(parseInt(n, 10));
+        }
+        return acc;
+      },
+      [] as (number | null)[]
+    );
+    expect(parsed2).toStrictEqual(expected2);
   });
 });
