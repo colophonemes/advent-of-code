@@ -16,17 +16,19 @@ export async function readableString(
 export async function reduceStream<T>(
   stream: ReadStream,
   delimiter: string,
-  cb: (acc: T, curr: string) => T,
+  cb: (acc: T, curr: string, idx: number) => T,
   init: T
 ): Promise<T> {
   let acc = init;
   let tokens: string[] = [];
+  let idx = 0;
   for await (const chunk of stream.iterator()) {
     let chars = (chunk as Buffer).toString().split("");
     while (chars.length > 0) {
       const char = chars.shift()!;
       if (char === delimiter) {
-        acc = cb(acc, tokens.join(""));
+        acc = cb(acc, tokens.join(""), idx);
+        idx++;
         tokens = [];
         if (chars.length === 0) {
           tokens.push("");
@@ -37,7 +39,7 @@ export async function reduceStream<T>(
     }
   }
   if (tokens.length) {
-    acc = cb(acc, tokens.join(""));
+    acc = cb(acc, tokens.join(""), idx);
   }
   return acc;
 }

@@ -23,16 +23,16 @@ describe("fs", () => {
     expect(parsed1).toStrictEqual(expected1);
 
     const lines = ["123", "456", "", "789", "", "101112"].join("\n");
-    const expected2 = [123, 456, null, 789, null, 101112];
+    const expected2 = [0, 123, 1, 456, 2, null, 3, 789, 4, null, 5, 101112];
     const stream2 = await readableString(lines, { highWaterMark: 8 });
     const parsed2 = await reduceStream(
       stream2,
       "\n",
-      (acc, n) => {
+      (acc, n, i) => {
         if (n === "") {
-          acc.push(null);
+          acc.push(i, null);
         } else {
-          acc.push(parseInt(n, 10));
+          acc.push(i, parseInt(n, 10));
         }
         return acc;
       },
