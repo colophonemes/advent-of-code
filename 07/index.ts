@@ -1,6 +1,13 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { Manifold, showManifold, traverse } from "./lib/tachyon";
+import {
+  buildGraph,
+  countPaths,
+  countSplits,
+  Manifold,
+  showManifold,
+  traverse,
+} from "./lib/tachyon";
 import { sleep } from "../common/sleep";
 import chalk from "chalk";
 
@@ -57,10 +64,16 @@ async function animate(
 }
 
 async function main() {
-  const manifold1 = await readManifold();
-  const splits = traverse(manifold1);
-  await animate(manifold1);
+  const manifold = await readManifold();
+  const graph = buildGraph(manifold);
+  console.log(`Built graph!`);
+  const splits = traverse(manifold);
+  await animate(manifold);
   console.log(`# of beam splits:`, splits);
+  const splits2 = countSplits(graph);
+  console.log(`# of beam splits:`, splits2);
+  const paths = countPaths(graph);
+  console.log(`# of paths:      `, paths);
 }
 
 main();
